@@ -29,10 +29,11 @@ class EV3():
     sound_sensor    = None
     sound_sensor_r  = None
     sound_sensor_l  = None
-    obstacle_sensor = None    
+    obstacle_sensor = None
+    ipev3	= "169.254.165.131"    
     
     def __init__(self):
-        self.build()
+        self.build() 
         
     def build(self):
         
@@ -45,13 +46,13 @@ class EV3():
         self.right_motor        = Motor(Port.B)
         self.robot              = DriveBase(self.left_motor, self.right_motor, wheel_diameter=55.5, axle_track=104)
         self.drive_speed        = 200
-        self.outsound()
+        self.server()
         
         
     def server(self):
         
         self.mysv = socket.socket()
-        self.mysv.bind(('169.254.231.179', 10000)) 
+        self.mysv.bind((self.ipev3, 10000)) 
         self.mysv.listen(5)
         print("Servidor de voz creado correctamente")
         
@@ -81,14 +82,14 @@ class EV3():
         """
         self.d = self.obstacle_sensor.distance() / 10
         
-        if self.d <30:
+        if self.d <50:
             print('giro -90')
             self.robot.turn(-90)
             self.ubication.append(-90)
             time.sleep(0.5)
             self.n = self.obstacle_sensor.distance()/10
             
-            if  self.n <30:
+            if  self.n <50:
                 print('giro -90')
                 self.robot.turn(-90)
                 self.ubication.append(-90)
@@ -108,9 +109,11 @@ class EV3():
             self.ubication.append(50)
             time.sleep(0.5)
             print('avanzo 50')
+            
     
+   
     def outsound(self):
-        
+    
         forward =True
         i=1
         while forward:
@@ -138,7 +141,11 @@ class EV3():
                     time.sleep(0.5)
                     self.n = self.obstacle_sensor.distance()/10
                     
-                    if  self.n <30:
+                    if((x > 10) or (y > 10) or (z > 10)):
+                        forward = False
+                        self.server()
+                    
+                    elif  self.n <30:
                         print('giro -90')
                         self.robot.turn(-90)
                         self.ubication.append(-90)
@@ -170,7 +177,11 @@ class EV3():
                     self.ubication.append(200)
                     self.ubication.append(i*90)
                     self.robot.turn(i*90)
-                    time.sleep(0.5)                    
+                    time.sleep(0.5)  
+                    
+                    if((x > 10) or (y > 10) or (z > 10)):
+                        forward = False
+                        self.server()                  
 
     def obs(self):
         
@@ -183,7 +194,7 @@ class EV3():
             pass
             self.n = self.obstacle_sensor.distance() / 10
             # robot avanza  y gira a la izquierda para esquivar el obstaculo
-            if(self.n>=25):
+            if(self.n>=27):
                 self.robot.straight(270)
                 self.ubication.append(270)
                 self.robot.turn(-90)
@@ -198,15 +209,15 @@ class EV3():
                     
                     #sigue avanzando y gira alrededor del obstaculo
                     if(self.p>=25):
-                        self.robot.straight(270)
-                        self.ubication.append(270)
+                        self.robot.straight(250)
+                        self.ubication.append(250)
                         self.robot.turn(-90)
                         self.ubication.append(-90)
                         self.q = self.obstacle_sensor.distance() / 10
                         
                         #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
                         
-                        if(self.q>=25):
+                        if(self.q>=27):
                             self.robot.straight(270)
                             self.ubication.append(270)
                             self.robot.turn(90)
@@ -226,44 +237,79 @@ class EV3():
                 self.ubication.append(250)
                 self.robot.turn(90)
                 self.ubication.append(90)
-                self. h= self.obstacle_sensor.distance() / 10
+                self. ultimateobs= self.obstacle_sensor.distance() / 10
 
-                if(self.h>=25):
+                if(self.ultimateobs<=27):
                     self.robot.straight(270)
                     self.ubication.append(270)
-                    self.robot.turn(90)
-                    self.ubication.append(90)
                     self.o = self.obstacle_sensor.distance() / 10
                     
-                #robot avanza  para esquivar el obstaculo
-                if(self.o>=25):
-                    self.robot.straight(250)
-                    self.ubication.append(250)
-                    self.p = self.obstacle_sensor.distance() / 10
-                    
-                    #sigue avanzando y gira alrededor del obstaculo
-                    if(self.p>=25):
-                        self.robot.straight(270)
-                        self.ubication.append(270)
-                        self.robot.turn(-90)
-                        self.ubication.append(-90)
-                        self.q = self.obstacle_sensor.distance() / 10
+                    #robot avanza  para esquivar el obstaculo
+                    if(self.o>=25):
+                        self.robot.straight(250)
+                        self.ubication.append(250)
+                        self.robot.turn(90)
+                        self.ubication.append(90)
+                        self.p = self.obstacle_sensor.distance() / 10
                         
-                        #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
-                        
-                        if(self.q>=25):
+                        #sigue avanzando y gira alrededor del obstaculo
+                        if(self.p>=27):
                             self.robot.straight(270)
                             self.ubication.append(270)
                             self.robot.turn(-90)
                             self.ubication.append(-90)
-                            self.r = self.obstacle_sensor.distance() / 10
+                            self.q = self.obstacle_sensor.distance() / 10
                             
-                            if(self.r>=25):
-                                self.robot.straight(250)
-                                self.ubication.append(250)
-                
-                
-                
+                            #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
+                            
+                            if(self.q>=27):
+                                self.robot.straight(270)
+                                self.ubication.append(270)
+                                           
+                elif(self.ultimateobs>=27):
+                    self.robot.turn(-90)
+                    self.ubication.append(-90)
+                    self.robot.straight(250)
+                    self.ubication.append(250)
+                    self.robot.turn(90)
+                    self.ubication.append(90)
+
+                    self. j= self.obstacle_sensor.distance() / 10
+
+                    if(self.j>=27):
+                        self.robot.straight(270)
+                        self.ubication.append(270)
+                        self.robot.turn(90)
+                        self.ubication.append(90)
+                        self.o = self.obstacle_sensor.distance() / 10
+                        
+                    #robot avanza  para esquivar el obstaculo
+                    if(self.o>=25):
+                        self.robot.straight(250)
+                        self.ubication.append(250)
+                        self.p = self.obstacle_sensor.distance() / 10
+                        
+                        #sigue avanzando y gira alrededor del obstaculo
+                        if(self.p>=27):
+                            self.robot.straight(270)
+                            self.ubication.append(270)
+                            self.robot.turn(90)
+                            self.ubication.append(90)
+                            self.q = self.obstacle_sensor.distance() / 10
+                            
+                            #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
+                            
+                            if(self.q>=27):
+                                self.robot.straight(270)
+                                self.ubication.append(270)
+                                self.robot.turn(-90)
+                                self.ubication.append(-90)
+                                self.r = self.obstacle_sensor.distance() / 10
+                                
+                                if(self.r>=25):
+                                    self.robot.straight(250)
+                                    self.ubication.append(250)    
+                    
             
 
     def movimiento(self):
@@ -272,7 +318,7 @@ class EV3():
         
         def server2(data):
             mysv = socket.socket()
-            mysv.bind(("169.254.231.179", 3200)) 
+            mysv.bind((self.ipev3, 3200)) 
             mysv.listen(5)
             print("Servidor de turtle creado correctamente")
             
@@ -310,19 +356,51 @@ class EV3():
                 time.sleep(0.5)
                 
             elif((self.x > self.y) and (self.x > self.z) and (self.x > 10)):
-                self.robot.straight(150)
-                self.ubication.append(150)
-                print("avanza")           
-                self.obs()    
-                time.sleep(0.5)   
                 
-                if(self.x >= 85):
-                    self.ubication.append(12)
-                    print("Se ha encontrado la victima, enviando ubicacion")
-                    print(self.ubication)
-                    server2(self.ubication)
-                    self.build()
-                    break;
+                self.far = self.obstacle_sensor.distance() / 10
+                
+                if (self.far>25):
+                    time.sleep(0.5)
+                    self.robot.straight(150)
+                    self.ubication.append(150)
+                    print("avanza")           
+                    self.obs()    
+                    time.sleep(0.5)   
+                    
+                    if(self.x >= 75):
+                        self.ubication.append(12)
+                        know = 0
+                        trying =False
+                        while trying:
+                            if(self.x >= 75):
+                                know=know+1
+                                if know == 3:
+                                    trying = True
+
+                        print("Se ha encontrado la victima, enviando ubicacion")
+                        print(self.ubication)
+                        server2(self.ubication)
+                        self.build()
+                        break;
+                else:
+                    self.obs()    
+                    time.sleep(0.5)   
+                    
+                    if(self.x >= 75):
+                        self.ubication.append(12)
+                        know = 0
+                        trying =False
+                        while trying:
+                            if(self.x >= 75):
+                                know=know+1
+                                if know == 3:
+                                    trying = True
+
+                        print("Se ha encontrado la victima, enviando ubicacion")
+                        print(self.ubication)
+                        server2(self.ubication)
+                        self.build()
+                        break;
         self.build()
         
   

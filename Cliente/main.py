@@ -24,6 +24,7 @@ Window.size = (500,500)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(pin,GPIO.OUT)
 GPIO.setup(pin2,GPIO.OUT)
+ipev3	= "169.254.165.131"
 
 class MainApp(MDApp):
 	screens		= {}
@@ -102,14 +103,14 @@ Screen:
      
 				except:
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("incapaz_de_reconocer".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='Incapaz de reconocer'
 						self.reconocimiento()
       
 				if self.fraseDicha == "Ayuda":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("ayuda".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='ayuda'
 						mysv.close()
@@ -117,7 +118,7 @@ Screen:
 
 				elif self.fraseDicha == "ayuda":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("ayuda".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='ayuda'
 						mysv.close()
@@ -125,7 +126,7 @@ Screen:
 						
 				elif self.fraseDicha == "Auxilio":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("auxilio".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='auxilio'
 						mysv.close()
@@ -133,7 +134,7 @@ Screen:
 
 				elif self.fraseDicha == "auxilio":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("auxilio".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='auxilio'
 						mysv.close()
@@ -141,7 +142,7 @@ Screen:
 
 				elif self.fraseDicha == "Socorro":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("socorro".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='socorro'
 						mysv.close()
@@ -149,7 +150,23 @@ Screen:
 
 				elif self.fraseDicha == "socorro":
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
+						mysv.send("socorro".encode('utf-8'))
+						self.screens['principal'].ids.dato.text='socorro'
+						mysv.close()
+						break;
+
+				elif self.fraseDicha == "Hola":
+					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
+						mysv.connect((ipev3, 10000))
+						mysv.send("socorro".encode('utf-8'))
+						self.screens['principal'].ids.dato.text='socorro'
+						mysv.close()
+						break;
+
+				elif self.fraseDicha == "hola":
+					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
+						mysv.connect((ipev3, 10000))
 						mysv.send("socorro".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='socorro'
 						mysv.close()
@@ -157,7 +174,7 @@ Screen:
 
 				else:
 					with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as mysv:
-						mysv.connect(("169.254.231.179", 10000))
+						mysv.connect((ipev3, 10000))
 						mysv.send("".encode('utf-8'))
 						self.screens['principal'].ids.dato.text='Incapaz de reconocer'
 
@@ -166,7 +183,7 @@ Screen:
      
 		while True:
 			mysv = socket.socket()
-			mysv.connect(("169.254.231.179", 3200))
+			mysv.connect((ipev3, 3200))
 			respuesta = mysv.recv(1024)
 			x = respuesta.decode('utf-8')
 			print(x)
