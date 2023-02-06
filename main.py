@@ -186,15 +186,15 @@ class EV3():
     def obs(self):
         
         self.d = self.obstacle_sensor.distance() / 10
-        #robot gira a la derecha por obstaculo
+        #robot gira a la derecha por un primer obstaculo
         if (self.d<25):
             time.sleep(0.5)
             self.robot.turn(90)
             self.ubication.append(90)
             pass
-            self.n = self.obstacle_sensor.distance() / 10
-            # robot avanza  y gira a la izquierda para esquivar el obstaculo
-            if(self.n>=27):
+            self.e = self.obstacle_sensor.distance() / 10
+            # robot avanza  y gira a la izquierda para esquivar el obstaculo -------------------------------------------------------------------
+            if(self.e>=27):
                 self.robot.straight(270)
                 self.ubication.append(270)
                 self.robot.turn(-90)
@@ -229,72 +229,31 @@ class EV3():
                                 self.ubication.append(250)
                         #self.p = self.obstacle_sensor.distance() / 10  
                               
-            #se encuentra otro obstaculo y se gira 
-            elif(self.n<=25):
+            #se encuentra un segundo obstaculo y se gira -------------------------------------------------------------------------------------------------
+            elif(self.e<=25):
                 self.robot.turn(-180)
                 self.ubication.append(-180)
-                self.robot.straight(250)
-                self.ubication.append(250)
-                self.robot.turn(90)
-                self.ubication.append(90)
                 self. ultimateobs= self.obstacle_sensor.distance() / 10
-
-                if(self.ultimateobs<=27):
-                    self.robot.straight(270)
-                    self.ubication.append(270)
-                    self.o = self.obstacle_sensor.distance() / 10
-                    
-                    #robot avanza  para esquivar el obstaculo
-                    if(self.o>=25):
-                        self.robot.straight(250)
-                        self.ubication.append(250)
-                        self.robot.turn(90)
-                        self.ubication.append(90)
-                        self.p = self.obstacle_sensor.distance() / 10
-                        
-                        #sigue avanzando y gira alrededor del obstaculo
-                        if(self.p>=27):
-                            self.robot.straight(270)
-                            self.ubication.append(270)
-                            self.robot.turn(-90)
-                            self.ubication.append(-90)
-                            self.q = self.obstacle_sensor.distance() / 10
-                            
-                            #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
-                            
-                            if(self.q>=27):
-                                self.robot.straight(270)
-                                self.ubication.append(270)
-                                           
-                elif(self.ultimateobs>=27):
-                    self.robot.turn(-90)
-                    self.ubication.append(-90)
+                pass
+                
+                #No se reconoce ningun obstaculo ---------------------------------------------------------------------------------------------------
+                if(self.ultimateobs>=27):
                     self.robot.straight(250)
                     self.ubication.append(250)
-                    self.robot.turn(90)
-                    self.ubication.append(90)
-
-                    self. j= self.obstacle_sensor.distance() / 10
-
-                    if(self.j>=27):
-                        self.robot.straight(270)
-                        self.ubication.append(270)
-                        self.robot.turn(90)
-                        self.ubication.append(90)
-                        self.o = self.obstacle_sensor.distance() / 10
-                        
+                    self.f = self.obstacle_sensor.distance() / 10
+                    
                     #robot avanza  para esquivar el obstaculo
-                    if(self.o>=25):
+                    if(self.f>=25):
                         self.robot.straight(250)
                         self.ubication.append(250)
+                        self.robot.turn(90)
+                        self.ubication.append(90)
                         self.p = self.obstacle_sensor.distance() / 10
                         
                         #sigue avanzando y gira alrededor del obstaculo
                         if(self.p>=27):
                             self.robot.straight(270)
                             self.ubication.append(270)
-                            self.robot.turn(90)
-                            self.ubication.append(90)
                             self.q = self.obstacle_sensor.distance() / 10
                             
                             #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
@@ -306,9 +265,76 @@ class EV3():
                                 self.ubication.append(-90)
                                 self.r = self.obstacle_sensor.distance() / 10
                                 
-                                if(self.r>=25):
-                                    self.robot.straight(250)
-                                    self.ubication.append(250)    
+                                
+                                if(self.r>=27):
+                                    self.robot.straight(270)
+                                    self.ubication.append(270)
+                                    self.s = self.obstacle_sensor.distance() / 10
+                            
+                                    #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
+                                    
+                                    if(self.s>=27):
+                                        self.robot.straight(270)
+                                        self.ubication.append(270)
+                                        self.robot.turn(-90)
+                                        self.ubication.append(-90)
+                                        
+                                
+                                
+                # se reconoce un tercer obstaculo -----------------------------------------------------------------------------------------------------                           
+                elif(self.ultimateobs<=27):
+                    self.robot.turn(-90)
+                    self.ubication.append(-90)
+                    self.robot.straight(270)
+                    self.ubication.append(270)
+                    self.robot.turn(90)
+                    self.ubication.append(90)
+                    self. j= self.obstacle_sensor.distance() / 10
+
+                    if(self.j>=27):
+                        self.robot.straight(270)
+                        self.ubication.append(270)
+                        self.robot.turn(90)
+                        self.ubication.append(90)
+                        self.f = self.obstacle_sensor.distance() / 10
+                        
+                    
+                    if(self.f>=27):
+                        self.robot.straight(270)
+                        self.ubication.append(270)
+                        self.p = self.obstacle_sensor.distance() / 10
+                        
+                        
+                        if(self.p>=27):
+                            self.robot.straight(270)
+                            self.ubication.append(270)
+                            self.q = self.obstacle_sensor.distance() / 10
+                            
+                            
+                            if(self.q>=27):
+                                self.robot.straight(270)
+                                self.ubication.append(270)
+                                self.r = self.obstacle_sensor.distance() / 10
+                                
+                                if(self.r>=27):
+                                    self.robot.straight(270)
+                                    self.ubication.append(270)
+                                    self.robot.turn(90)
+                                    self.ubication(90)
+                                    self.s = self.obstacle_sensor.distance() / 10
+                                    
+                                    if(self.s>=27):
+                                        self.robot.straight(270)
+                                        self.ubication.append(270)
+                                        self.t = self.obstacle_sensor.distance() / 10
+                                        
+                                        if(self.r>=27):
+                                            self.robot.straight(270)
+                                            self.ubication.append(270)
+                                            self.robot.turn(90)
+                                            self.ubication(90)
+                                            
+                                        
                     
             
 
