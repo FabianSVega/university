@@ -12,8 +12,10 @@ from pybricks.robotics      import DriveBase
 from pybricks.hubs          import EV3Brick
 
 #______________ Python Libraries ______________ 
+from umqtt.simple import MQTTClient
 import threading
 import socket
+import ubinascii
 import time
 
 
@@ -30,10 +32,11 @@ class EV3():
     sound_sensor_r  = None
     sound_sensor_l  = None
     obstacle_sensor = None
-    ipev3	= "169.254.165.131"    
+    ipev3	= "169.254.33.201"    
+    state           = None
     
     def __init__(self):
-        self.build() 
+        self.build()
         
     def build(self):
         
@@ -42,38 +45,66 @@ class EV3():
         self.sound_sensor       = SoundSensor(Port.S3)
         self.sound_sensor_r     = SoundSensor(Port.S4)
         self.sound_sensor_l     = SoundSensor (Port.S1) 
-        self.left_motor         = Motor(Port.A)
+        self.left_motor         = Motor(Port.C)
         self.right_motor        = Motor(Port.B)
         self.robot              = DriveBase(self.left_motor, self.right_motor, wheel_diameter=55.5, axle_track=104)
         self.drive_speed        = 200
-        self.server()
+        expect=self.mainmqtt("192.168.39.167")
+        print(expect, " i am in build")
         
         
-    def server(self):
+    def sub_cb(self,topic, msg):
         
-        self.mysv = socket.socket()
-        self.mysv.bind((self.ipev3, 10000)) 
-        self.mysv.listen(5)
-        print("Servidor de voz creado correctamente")
+        print((topic, msg))
+        self.state = msg
+        return self.state
+    
+       
+    def mainmqtt(self,server):
+        c = MQTTClient("umqtt_clinet", server)
+        c.set_callback(self.sub_cb)
+        print(c.set_callback(self.sub_cb),"callback")
+        c.connect()
+        c.subscribe(b"test/message")
+        print("Connected to ")
         
-        while True:
-             
-            print("esperando a que el cliente se conecte".encode('utf-8'))     
-            self.conexion, self.addr = self.mysv.accept()
-            print (self.addr)
-            self.peticion = self.conexion.recv(1024)
-            print(self.peticion.decode('utf-8'))
+        try:
+            while 1:
             
-            if(self.peticion.decode('utf-8') == "ayuda" or self.peticion.decode('utf-8') == "auxilio" or self.peticion.decode('utf-8') =="socorro"):
-                self.movimiento()
-                self.conexion.close()
+                c.wait_msg()
+                print(self.state,"i am in while")
                 break;
-            
-            elif(self.peticion.decode('utf-8') == "incapaz_de_reconocer"):
+                
+        finally:
+                
+            c.disconnect()
+            print("hello there")
+            if self.state == b"go to search ayuda":
+                
+                self.movimiento()
+                
+            elif self.state == b"unable to recognize":
                 self.avanzar_buscando_victima()
                 
-        self.conexion.close()
-        print("Se cerro la conexion")
+            elif self.state == b"continue":
+                print("continue")
+                
+            return self.state
+        
+        
+    def hellothere(self,msgp):
+        c = MQTTClient("umqtt_client","192.168.39.167")
+        c.connect()
+        c.publish(b"test/droid",msgp)
+        c.disconnect()
+        expect = self.mainmqtt("192.168.39.167")
+        
+        if expect == b"continue":
+            print("continue exit to funtion")
+        elif expect == b"unable to recognize":
+            self.avanzar_buscando_victima()
+        
+ 
         
     def avanzar_buscando_victima(self):
         """
@@ -227,6 +258,7 @@ class EV3():
                             if(self.r>=25):
                                 self.robot.straight(250)
                                 self.ubication.append(250)
+                                self.hellothere(b"fabian")
                         #self.p = self.obstacle_sensor.distance() / 10  
                               
             #se encuentra un segundo obstaculo y se gira -------------------------------------------------------------------------------------------------
@@ -261,8 +293,8 @@ class EV3():
                             if(self.q>=27):
                                 self.robot.straight(270)
                                 self.ubication.append(270)
-                                self.robot.turn(-90)
-                                self.ubication.append(-90)
+                                self.robot.turn(90)
+                                self.ubication.append(90)
                                 self.r = self.obstacle_sensor.distance() / 10
                                 
                                 
@@ -278,6 +310,7 @@ class EV3():
                                         self.ubication.append(270)
                                         self.robot.turn(-90)
                                         self.ubication.append(-90)
+                                        self.hellothere(b"fabian")
                                         
                                 
                                 
@@ -333,35 +366,11 @@ class EV3():
                                             self.ubication.append(270)
                                             self.robot.turn(90)
                                             self.ubication(90)
-                                            
-                                        
-                    
+                                            self.hellothere(b"fabian")
             
 
     def movimiento(self):
         
-        self.conexion.close()
-        
-        def server2(data):
-            mysv = socket.socket()
-            mysv.bind((self.ipev3, 3200)) 
-            mysv.listen(5)
-            print("Servidor de turtle creado correctamente")
-            
-            while True:   
-                print("Esperando a que el cliente se conecte")
-                conexion, addr = mysv.accept()
-                print (addr)
-                
-                if (data != None or data != "" or data != []):
-                    conexion.send(str(data).encode('utf-8'))
-                    peticion = conexion.recv(1024)
-                    print(data)
-                    conexion.close()
-                    break;
-                else: 
-                    print("Ha ocurrido un error")
-
         while True:
             self.x = self.sound_sensor.intensity(audible_only=True)-10 #AVANZA
             self.y = self.sound_sensor_r.intensity(audible_only=True)-10 #DERECHA
@@ -372,12 +381,14 @@ class EV3():
                 self.ubication.append(-90)
                 print("Gira a la izquierda")
                 self.obs()
+                
                 time.sleep(0.5)
                 
             elif((self.y > self.z) and (self.y > self.x) and (self.y > 5)):
                 self.robot.turn(90)
                 self.ubication.append(90)
                 self.obs()
+                
                 print("Gira a la derecha")
                 time.sleep(0.5)
                 
@@ -390,44 +401,31 @@ class EV3():
                     self.robot.straight(150)
                     self.ubication.append(150)
                     print("avanza")           
-                    self.obs()    
+                    self.obs()   
+                    
                     time.sleep(0.5)   
                     
-                    if(self.x >= 75):
+                    if(self.x >= 55):
                         self.ubication.append(12)
                         know = 0
                         trying =False
-                        while trying:
-                            if(self.x >= 75):
-                                know=know+1
-                                if know == 3:
-                                    trying = True
-
+                        
                         print("Se ha encontrado la victima, enviando ubicacion")
                         print(self.ubication)
-                        server2(self.ubication)
-                        self.build()
+                        self.hellothere(str(self.ubication).encode())
                         break;
                 else:
                     self.obs()    
                     time.sleep(0.5)   
                     
-                    if(self.x >= 75):
+                    if(self.x >= 55):
                         self.ubication.append(12)
-                        know = 0
-                        trying =False
-                        while trying:
-                            if(self.x >= 75):
-                                know=know+1
-                                if know == 3:
-                                    trying = True
-
+                    
                         print("Se ha encontrado la victima, enviando ubicacion")
                         print(self.ubication)
-                        server2(self.ubication)
-                        self.build()
-                        break;
-        self.build()
+                        self.hellothere(str(self.ubication).encode())
+                        
+        
         
   
         
