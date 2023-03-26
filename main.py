@@ -3,19 +3,14 @@
 # Fecha Actualizacion: 01/10/2022 
 
 #_____________________  EV3 libraries   _______________________________
-from pybricks.ev3devices    import (Motor, TouchSensor, ColorSensor,InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.parameters    import Port, Stop, Direction, Button, Color
-from pybricks.tools         import wait, StopWatch, DataLog
-from pybricks.media.ev3dev  import SoundFile, ImageFile
+from pybricks.ev3devices    import (Motor,UltrasonicSensor)
+from pybricks.parameters    import Port
 from pybricks.nxtdevices    import (SoundSensor)
 from pybricks.robotics      import DriveBase
 from pybricks.hubs          import EV3Brick
 
 #______________ Python Libraries ______________ 
 from umqtt.simple import MQTTClient
-import threading
-import socket
-import ubinascii
 import time
 
 
@@ -32,7 +27,6 @@ class EV3():
     sound_sensor_r  = None
     sound_sensor_l  = None
     obstacle_sensor = None
-    ipev3	= "169.254.33.201"    
     state           = None
     
     def __init__(self):
@@ -49,18 +43,17 @@ class EV3():
         self.right_motor        = Motor(Port.B)
         self.robot              = DriveBase(self.left_motor, self.right_motor, wheel_diameter=55.5, axle_track=104)
         self.drive_speed        = 200
-        expect=self.mainmqtt("192.168.39.167")
+        self.host             = "192.168.39.167"
+        expect=self.mainmqtt(self.host)
         print(expect, " i am in build")
         
-        
     def sub_cb(self,topic, msg):
-        
         print((topic, msg))
         self.state = msg
         return self.state
-    
-       
+
     def mainmqtt(self,server):
+        
         c = MQTTClient("umqtt_clinet", server)
         c.set_callback(self.sub_cb)
         print(c.set_callback(self.sub_cb),"callback")
@@ -70,7 +63,6 @@ class EV3():
         
         try:
             while 1:
-            
                 c.wait_msg()
                 print(self.state,"i am in while")
                 break;
@@ -79,39 +71,32 @@ class EV3():
                 
             c.disconnect()
             print("hello there")
-            if self.state == b"go to search ayuda":
+            if self.state == b"let search":      self.movimiento()
                 
-                self.movimiento()
+            elif self.state == b"unable to recognize":  self.avanzar_buscando_victima()
                 
-            elif self.state == b"unable to recognize":
-                self.avanzar_buscando_victima()
-                
-            elif self.state == b"continue":
-                print("continue")
+            elif self.state == b"continue":             print("continue")
                 
             return self.state
         
-        
     def hellothere(self,msgp):
-        c = MQTTClient("umqtt_client","192.168.39.167")
+        c = MQTTClient("umqtt_client",self.host)
         c.connect()
         c.publish(b"test/droid",msgp)
         c.disconnect()
-        expect = self.mainmqtt("192.168.39.167")
+        expect = self.mainmqtt(self.host)
         
         if expect == b"continue":
-            print("continue exit to funtion")
+            print("continue exit to function")
         elif expect == b"unable to recognize":
             self.avanzar_buscando_victima()
-        
- 
         
     def avanzar_buscando_victima(self):
         """
             Cuando la palabra especifica no es reconocida con exactitud o es una distinta a las 3 esperadas, se 
             procede a hacer un avance de 50 centimetros, estando al pendiente de los obstaculos.
         """
-        self.d = self.obstacle_sensor.distance() / 10
+        self.d = self.obstacle_sensor.distance() / 10 #Ultrasonic sensor
         
         if self.d <50:
             print('giro -90')
@@ -120,7 +105,7 @@ class EV3():
             time.sleep(0.5)
             self.n = self.obstacle_sensor.distance()/10
             
-            if  self.n <50:
+            if  self.n < 50:
                 print('giro -90')
                 self.robot.turn(-90)
                 self.ubication.append(-90)
@@ -140,9 +125,7 @@ class EV3():
             self.ubication.append(50)
             time.sleep(0.5)
             print('avanzo 50')
-            
-    
-   
+
     def outsound(self):
     
         forward =True
@@ -367,7 +350,6 @@ class EV3():
                                             self.robot.turn(90)
                                             self.ubication(90)
                                             self.hellothere(b"fabian")
-            
 
     def movimiento(self):
         
@@ -375,7 +357,7 @@ class EV3():
             self.x = self.sound_sensor.intensity(audible_only=True)-10 #AVANZA
             self.y = self.sound_sensor_r.intensity(audible_only=True)-10 #DERECHA
             self.z = self.sound_sensor_l.intensity(audible_only=True)-10 #IZQUIERDA
-               
+
             if((self.z > self.y) and (self.z > self.x) and (self.z > 5)):
                 self.robot.turn(-90)
                 self.ubication.append(-90)
@@ -407,8 +389,6 @@ class EV3():
                     
                     if(self.x >= 55):
                         self.ubication.append(12)
-                        know = 0
-                        trying =False
                         
                         print("Se ha encontrado la victima, enviando ubicacion")
                         print(self.ubication)
@@ -424,11 +404,5 @@ class EV3():
                         print("Se ha encontrado la victima, enviando ubicacion")
                         print(self.ubication)
                         self.hellothere(str(self.ubication).encode())
-                        
-        
-        
-  
-        
 
-if __name__ == "__main__":
-    EV3()
+if __name__ == "__main__":  EV3()

@@ -11,33 +11,34 @@ Screen:
             size_hint:(1,.2)
             pos_hint: {"center_x": 0.5, "center_y":1}
             md_bg_color:1,0,0,1
+
         AsyncImage:
+
             id:ev3
             source:'./build/imgs/ev3.png'
             pos_hint:{'center_x':0.5, 'center_y':.8}
+            
         FloatLayout:
 
             MDFillRoundFlatButton:
-                text:"Dibujar ruta"
-                font_size: 24
-                pos_hint: {"center_x": 0.5, "center_y":.9}
-                size_hint:(.4,0.25)
-                md_bg_color:1,0,0,1
-                on_press: app.draw_vector()
 
-            MDFillRoundFlatButton:
                 text: "Reconocer palabra"
                 font_size: 24
-                pos_hint: {"center_x": 0.5, "center_y":0.6}
+                pos_hint: {"center_x": 0.5, "center_y":0.5}
+
+
+
                 size_hint:(.4,0.25)
                 md_bg_color:1,0,0,1
                 on_release: app.reconocimiento()
+
             MDCard:
                 halign:'center'
                 line_color:0,0,0,1
                 pos_hint:{'center_x':0.5, 'center_y':0.25}
                 size_hint:(.6,.4)
                 radius:25,25,25,25
+
                 MDLabel:
                     id: dato
                     font_size: 35
