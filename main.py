@@ -229,7 +229,7 @@ class EV3():
                         self.ubication.append(-90)
                         self.q = self.obstacle_sensor.distance() / 10
                         
-                        #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
+                        #robot avanza al lado del obstaculo y gira a la derecha para retomar la posicion
                         
                         if(self.q>=27):
                             self.robot.straight(270)
@@ -243,7 +243,6 @@ class EV3():
                                 self.ubication.append(250)
                                 self.hellothere(b"fabian")
                         #self.p = self.obstacle_sensor.distance() / 10  
-                              
             #se encuentra un segundo obstaculo y se gira -------------------------------------------------------------------------------------------------
             elif(self.e<=25):
                 self.robot.turn(-180)
