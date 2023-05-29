@@ -7,14 +7,6 @@
 <hr>
 
 💬 Move and recognize of RLDPA
-<video  style="position: absolute; transform: translate(-373px, 68px); width: 313px;" src=""></video>
+<video src="https://github.com/FabianSVega/university/assets/104441426/5b8f1091-75b1-4cfa-bc8b-6ca7d5fef61f"></video>
 📫 You can find the complet test on: https://youtu.be/XvtO-DwpOAI
-
- 👩‍💻 I'm currently working on...
-
-  🧠 I'm currently learning...
-
-      👯‍♀️ I'm looking to collaborate on...
-
-      🤔 I'm looking for help with...
 
