@@ -7,7 +7,8 @@
 <hr>
 
 💬 Move and recognize of RLDPA
-<video  style="position: absolute; transform: translate(-373px, 68px);" width="300dp" src="https://github.com/FabianSVega/university/assets/104441426/5b8f1091-75b1-4cfa-bc8b-6ca7d5fef61f"></video>
+<video  style="position: absolute; transform: translate(-373px, 68px); width: 313px;" src="
+"></video>
 📫 You can find the complet test on: https://youtu.be/XvtO-DwpOAI
 
 
