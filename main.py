@@ -1,6 +1,6 @@
 #!/usr/bin/env pybricks-micropython
 #Autores: Fabian Segura, Fernando Gomez
-# Fecha Actualizacion: 01/10/2022 
+# Fecha Actualizacion: 29/04/2023
 
 #_____________________  EV3 libraries   _______________________________
 from pybricks.ev3devices    import (Motor,UltrasonicSensor)
@@ -12,6 +12,9 @@ from pybricks.hubs          import EV3Brick
 #______________ Python Libraries ______________ 
 from umqtt.simple import MQTTClient
 import time
+import utime
+import threading
+
 
 
 class EV3():
@@ -33,99 +36,87 @@ class EV3():
         self.build()
         
     def build(self):
-        
-        self.ev3                = EV3Brick()
-        self.obstacle_sensor    = UltrasonicSensor(Port.S2)
-        self.sound_sensor       = SoundSensor(Port.S3)
-        self.sound_sensor_r     = SoundSensor(Port.S4)
-        self.sound_sensor_l     = SoundSensor (Port.S1) 
-        self.left_motor         = Motor(Port.C)
-        self.right_motor        = Motor(Port.B)
-        self.robot              = DriveBase(self.left_motor, self.right_motor, wheel_diameter=55.5, axle_track=104)
-        self.drive_speed        = 200
-        self.host             = "192.168.39.167"
+        self.ev3                = EV3Brick()                        #Instanciamos EV3
+        self.obstacle_sensor    = UltrasonicSensor(Port.S2)         #Intanciamos sensor de ultasonido EV3
+        self.sound_sensor       = SoundSensor(Port.S3)              #Instanciamos sensor de sonido
+        self.sound_sensor_r     = SoundSensor(Port.S4)              #Instanciamos sensor de sonido
+        self.sound_sensor_l     = SoundSensor (Port.S1)             #Instanciamos sensor de sonido
+        self.left_motor         = Motor(Port.C)                     #Instanciamos motor izquierda
+        self.right_motor        = Motor(Port.B)                     #Instanciamos motor derecha
+        self.robot              = DriveBase(self.left_motor, self.right_motor, wheel_diameter=55.5, axle_track=104) #Creamos una instancia(objeto) de nuestro robot, especificandole motores, diametro de las ruedas y la longitud del eje  
+        self.drive_speed        = 200                               #Definimos una velocidad constante para el robot
+        self.host               = "192.168.0.13"                    #Creamos una variable que manejara la direccion IP de nuestro cliente.
         expect=self.mainmqtt(self.host)
         print(expect, " i am in build")
         
-    def sub_cb(self,topic, msg):
+
+        
+    def turns(self):        #Funcion para establecer giros en el entorno  
+        while True:      
+            giro=input("giro")
+            if giro == "1":
+                self.robot.turn(-122)
+            elif giro == "2":
+                self.robot.turn(122) 
+            elif giro == "3":
+                self.robot.turn(-240)
+            elif giro == "4":
+                self.robot.turn(240) 
+            elif giro == "5":
+                self.forward()
+            elif giro == "6":
+                return False
+                        
+    def sub_cb(self,topic, msg): 
         print((topic, msg))
         self.state = msg
         return self.state
 
     def mainmqtt(self,server):
-        
-        c = MQTTClient("umqtt_clinet", server)
+        c = MQTTClient("umqtt_clinet", server) #Establecemos conexion con el cliente
         c.set_callback(self.sub_cb)
-        print(c.set_callback(self.sub_cb),"callback")
         c.connect()
         c.subscribe(b"test/message")
-        print("Connected to ")
-        
-        try:
-            while 1:
-                c.wait_msg()
-                print(self.state,"i am in while")
-                break;
-                
-        finally:
-                
-            c.disconnect()
-            print("hello there")
-            if self.state == b"let search":      self.movimiento()
-                
-            elif self.state == b"unable to recognize":  self.avanzar_buscando_victima()
-                
-            elif self.state == b"continue":             print("continue")
-                
-            return self.state
-        
-    def hellothere(self,msgp):
+        print("Connected to ",c.server)
+        c.wait_msg()                        
+        c.disconnect()
+        if self.state == b"let search":    
+            print("El mensaje recibido fue: ",self.state)  
+            return self.movimiento()
+            
+        elif self.state == b"unable to recognize":  
+            print("Incapaz de reconocer ó la palabra no es la adecuada")
+            return self.mainmqtt(self.host)
+            
+        return self.state
+
+    def mqtt_rpi4(self,msgp):
         c = MQTTClient("umqtt_client",self.host)
         c.connect()
         c.publish(b"test/droid",msgp)
         c.disconnect()
-        expect = self.mainmqtt(self.host)
-        
-        if expect == b"continue":
-            print("continue exit to function")
-        elif expect == b"unable to recognize":
-            self.avanzar_buscando_victima()
-        
-    def avanzar_buscando_victima(self):
-        """
-            Cuando la palabra especifica no es reconocida con exactitud o es una distinta a las 3 esperadas, se 
-            procede a hacer un avance de 50 centimetros, estando al pendiente de los obstaculos.
-        """
-        self.d = self.obstacle_sensor.distance() / 10 #Ultrasonic sensor
-        
-        if self.d <50:
-            print('giro -90')
-            self.robot.turn(-90)
-            self.ubication.append(-90)
-            time.sleep(0.5)
-            self.n = self.obstacle_sensor.distance()/10
-            
-            if  self.n < 50:
-                print('giro -90')
-                self.robot.turn(-90)
-                self.ubication.append(-90)
-                time.sleep(0.5)
-                print('avanzo -50')
-                self.robot.straight(50)
-                self.ubication.append(50)
-                time.sleep(0.5)
-                
-            else:
-                print('avanzo 50')
-                self.robot.straight(50)
-                self.ubication.append(50)
-                time.sleep(0.5)
-        else:
-            self.robot.straight(50)
-            self.ubication.append(50)
-            time.sleep(0.5)
-            print('avanzo 50')
+        self.mainmqtt(self.host)
 
+    def distance(self):
+        return self.obstacle_sensor.distance() / 10
+
+    def forward(self): #Avanza
+        self.robot.straight(270)
+        self.robot.turn(-2)
+        self.ubication.append(270)
+
+    def left(self): #Izquierda
+        self.robot.turn(-130)
+        self.ubication.append(-90)
+
+    def right(self): #Derecha
+        self.robot.turn(130)
+        self.ubication.append(90)
+    def halfturn(self): #Giro de 180°
+        self.robot.turn(-230)
+        self.ubication.append(-180)
+        
+        
     def outsound(self):
     
         forward =True
@@ -160,7 +151,7 @@ class EV3():
                         self.server()
                     
                     elif  self.n <30:
-                        print('giro -90')
+                        
                         self.robot.turn(-90)
                         self.ubication.append(-90)
                         time.sleep(0.5) 
@@ -195,213 +186,150 @@ class EV3():
                     
                     if((x > 10) or (y > 10) or (z > 10)):
                         forward = False
-                        self.server()                  
-
-    def obs(self):
+                        self.server()          
         
-        self.d = self.obstacle_sensor.distance() / 10
+    def obs(self):
         #robot gira a la derecha por un primer obstaculo
-        if (self.d<25):
+        self.x = self.sound_sensor.intensity(audible_only=True)-10 #AVANZA
+        if (self.distance()<25):
+            if(self.x >= 40):
+                self.ubication.append(12)
+                print("Se ha encontrado la victima, enviando ubicacion")
+                print(self.ubication)
+                self.mqtt_rpi4(str(self.ubication).encode())
+                
+            self.right()
             time.sleep(0.5)
-            self.robot.turn(90)
-            self.ubication.append(90)
             pass
-            self.e = self.obstacle_sensor.distance() / 10
             # robot avanza  y gira a la izquierda para esquivar el obstaculo -------------------------------------------------------------------
-            if(self.e>=27):
-                self.robot.straight(270)
-                self.ubication.append(270)
-                self.robot.turn(-90)
-                self.ubication.append(-90)
-                self.o = self.obstacle_sensor.distance() / 10
-                
+            if(self.distance()>=27):
+                self.forward()
+                time.sleep(0.5)
+                self.left()
                 #robot avanza  para esquivar el obstaculo
-                if(self.o>=25):
-                    self.robot.straight(250)
-                    self.ubication.append(250)
-                    self.p = self.obstacle_sensor.distance() / 10
-                    
-                    #sigue avanzando y gira alrededor del obstaculo
-                    if(self.p>=25):
-                        self.robot.straight(250)
-                        self.ubication.append(250)
-                        self.robot.turn(-90)
-                        self.ubication.append(-90)
-                        self.q = self.obstacle_sensor.distance() / 10
-                        
+                if(self.distance()>=25):
+                    self.forward()
+                    time.sleep(0.5)
+                    #Sigue avanzando y gira alrededor del obstaculo
+                    if(self.distance()>=25):
+                        self.forward()
+                        time.sleep(0.5)
+                        self.left()
                         #robot avanza al lado del obstaculo y gira a la derecha para retomar la posicion
-                        
-                        if(self.q>=27):
-                            self.robot.straight(270)
-                            self.ubication.append(270)
-                            self.robot.turn(90)
-                            self.ubication.append(90)
-                            self.r = self.obstacle_sensor.distance() / 10
+                        if(self.distance()>=27):
+                            self.forward()
+                            time.sleep(0.5)
+                            self.right()
                             
-                            if(self.r>=25):
-                                self.robot.straight(250)
-                                self.ubication.append(250)
-                                self.hellothere(b"fabian")
-                        #self.p = self.obstacle_sensor.distance() / 10  
+                            if(self.distance()>=25):
+                                self.forward()
+                                self.mqtt_rpi4(b"recognize")
             #se encuentra un segundo obstaculo y se gira -------------------------------------------------------------------------------------------------
-            elif(self.e<=25):
-                self.robot.turn(-180)
-                self.ubication.append(-180)
-                self. ultimateobs= self.obstacle_sensor.distance() / 10
+            elif(self.distance()<=25):
+                self.halfturn()
+                time.sleep(0.5)
                 pass
-                
                 #No se reconoce ningun obstaculo ---------------------------------------------------------------------------------------------------
-                if(self.ultimateobs>=27):
-                    self.robot.straight(250)
-                    self.ubication.append(250)
-                    self.f = self.obstacle_sensor.distance() / 10
-                    
+                if(self.distance()>=27):
+                    self.forward()
+                    time.sleep(0.5)
                     #robot avanza  para esquivar el obstaculo
-                    if(self.f>=25):
-                        self.robot.straight(250)
-                        self.ubication.append(250)
-                        self.robot.turn(90)
-                        self.ubication.append(90)
-                        self.p = self.obstacle_sensor.distance() / 10
-                        
+                    if(self.distance()>=25):
+                        self.forward()
+                        time.sleep(0.5)
+                        self.right()
                         #sigue avanzando y gira alrededor del obstaculo
-                        if(self.p>=27):
-                            self.robot.straight(270)
-                            self.ubication.append(270)
-                            self.q = self.obstacle_sensor.distance() / 10
-                            
+                        if(self.distance()>=27):
+                            self.forward()
+                            time.sleep(0.5)
+                            self.right()
+                            self.mqtt_rpi4(b"recognize")
                             #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
-                            
-                            if(self.q>=27):
-                                self.robot.straight(270)
-                                self.ubication.append(270)
-                                self.robot.turn(90)
-                                self.ubication.append(90)
-                                self.r = self.obstacle_sensor.distance() / 10
-                                
-                                
-                                if(self.r>=27):
-                                    self.robot.straight(270)
-                                    self.ubication.append(270)
-                                    self.s = self.obstacle_sensor.distance() / 10
-                            
+                            if(self.distance()<=27):
+                                self.forward()
+                                time.sleep(0.5)
+                                self.right()                       
+                                if(self.distance()>=27):
+                                    self.forward()
                                     #robot avanza al lado del obstaculo y gira a la derecha para retomar la poscicion
-                                    
-                                    if(self.s>=27):
-                                        self.robot.straight(270)
-                                        self.ubication.append(270)
-                                        self.robot.turn(-90)
-                                        self.ubication.append(-90)
-                                        self.hellothere(b"fabian")
-                                        
-                                
-                                
+                                    if(self.distance()>=27):
+                                        self.forward()
+                                        time.sleep(0.5)
+                                        self.left()
+                                        self.mqtt_rpi4(b"recognize")
                 # se reconoce un tercer obstaculo -----------------------------------------------------------------------------------------------------                           
-                elif(self.ultimateobs<=27):
-                    self.robot.turn(-90)
-                    self.ubication.append(-90)
-                    self.robot.straight(270)
-                    self.ubication.append(270)
-                    self.robot.turn(90)
-                    self.ubication.append(90)
-                    self. j= self.obstacle_sensor.distance() / 10
-
-                    if(self.j>=27):
-                        self.robot.straight(270)
-                        self.ubication.append(270)
-                        self.robot.turn(90)
-                        self.ubication.append(90)
-                        self.f = self.obstacle_sensor.distance() / 10
-                        
-                    
-                    if(self.f>=27):
-                        self.robot.straight(270)
-                        self.ubication.append(270)
-                        self.p = self.obstacle_sensor.distance() / 10
-                        
-                        
-                        if(self.p>=27):
-                            self.robot.straight(270)
-                            self.ubication.append(270)
-                            self.q = self.obstacle_sensor.distance() / 10
-                            
-                            
-                            if(self.q>=27):
-                                self.robot.straight(270)
-                                self.ubication.append(270)
-                                self.r = self.obstacle_sensor.distance() / 10
-                                
-                                if(self.r>=27):
-                                    self.robot.straight(270)
-                                    self.ubication.append(270)
-                                    self.robot.turn(90)
-                                    self.ubication(90)
-                                    self.s = self.obstacle_sensor.distance() / 10
-                                    
-                                    if(self.s>=27):
-                                        self.robot.straight(270)
-                                        self.ubication.append(270)
-                                        self.t = self.obstacle_sensor.distance() / 10
-                                        
-                                        if(self.r>=27):
-                                            self.robot.straight(270)
-                                            self.ubication.append(270)
-                                            self.robot.turn(90)
-                                            self.ubication(90)
-                                            self.hellothere(b"fabian")
+                elif(self.distance()<=27):
+                    self.left()
+                    time.sleep(0.5)
+                    self.forward()
+                    time.sleep(0.5)
+                    self.right()
+                    if(self.distance()>=27):
+                        self.forward()
+                        time.sleep(0.5)
+                        self.right()
+                    if(self.distance()>=27):
+                        self.forward()
+                        if(self.distance()>=27):
+                            self.forward()
+                            if(self.distance()>=27):
+                                self.forward()
+                                if(self.distance()>=27):
+                                    self.forward()
+                                    time.sleep(0.5)
+                                    self.right()
+                                    if(self.distance()>=27):
+                                        self.forward()
+                                        time.sleep(0.5)
+                                        if(self.distance()>=27):
+                                            self.forward()
+                                            time.sleep(0.5)
+                                            self.right()
+                                            self.mqtt_rpi4(b"recognize")
 
     def movimiento(self):
-        
         while True:
             self.x = self.sound_sensor.intensity(audible_only=True)-10 #AVANZA
             self.y = self.sound_sensor_r.intensity(audible_only=True)-10 #DERECHA
             self.z = self.sound_sensor_l.intensity(audible_only=True)-10 #IZQUIERDA
-
             if((self.z > self.y) and (self.z > self.x) and (self.z > 5)):
-                self.robot.turn(-90)
-                self.ubication.append(-90)
+                self.left()
                 print("Gira a la izquierda")
                 self.obs()
-                
                 time.sleep(0.5)
-                
+                if(self.z>= 55):
+                    print(self.x )
+                    self.ubication.append(12)
+                    print("Se ha encontrado la victima, enviando ubicacion")
+                    print(self.ubication)
+                    self.mqtt_rpi4(str(self.ubication).encode())
+                    break;
             elif((self.y > self.z) and (self.y > self.x) and (self.y > 5)):
-                self.robot.turn(90)
-                self.ubication.append(90)
+                self.right()
                 self.obs()
-                
                 print("Gira a la derecha")
                 time.sleep(0.5)
-                
+                if(self.y >= 55):
+                    print(self.x )
+                    self.ubication.append(12)
+                    print("Se ha encontrado la victima, enviando ubicacion")
+                    print(self.ubication)
+                    self.mqtt_rpi4(str(self.ubication).encode())
+                    break;
             elif((self.x > self.y) and (self.x > self.z) and (self.x > 10)):
+                self.robot.straight(150)
+                self.ubication.append(150)
+                print("Avanza", self.x)
+                self.obs()
+                time.sleep(0.5)   
+                if(self.x >= 55):
+                    print(self.x )
+                    self.ubication.append(12)
+                    print("Se ha encontrado la victima, enviando ubicacion")
+                    print(self.ubication)
+                    self.mqtt_rpi4(str(self.ubication).encode())
+                    break;           
+          
                 
-                self.far = self.obstacle_sensor.distance() / 10
-                
-                if (self.far>25):
-                    time.sleep(0.5)
-                    self.robot.straight(150)
-                    self.ubication.append(150)
-                    print("avanza")           
-                    self.obs()   
-                    
-                    time.sleep(0.5)   
-                    
-                    if(self.x >= 55):
-                        self.ubication.append(12)
-                        
-                        print("Se ha encontrado la victima, enviando ubicacion")
-                        print(self.ubication)
-                        self.hellothere(str(self.ubication).encode())
-                        break;
-                else:
-                    self.obs()    
-                    time.sleep(0.5)   
-                    
-                    if(self.x >= 55):
-                        self.ubication.append(12)
-                    
-                        print("Se ha encontrado la victima, enviando ubicacion")
-                        print(self.ubication)
-                        self.hellothere(str(self.ubication).encode())
-
+            
 if __name__ == "__main__":  EV3()

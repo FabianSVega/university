@@ -23,13 +23,16 @@ pin2 = 13
 pin3 = 35
 pin4 = 38
 pin5 = 40
+pin6 = 15
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(pin,GPIO.OUT)
 GPIO.setup(pin2,GPIO.OUT)
 GPIO.setup(pin3,GPIO.OUT)
-GPIO.setup(pin5,GPIO.OUT)
 GPIO.setup(pin4,GPIO.OUT)
+GPIO.setup(pin5,GPIO.OUT)
+GPIO.setup(pin5,GPIO.OUT)
+
 Window.fullscreen = 0
 Window.size = (500,500)
 
