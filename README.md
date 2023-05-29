@@ -7,6 +7,10 @@
 <hr>
 
 💬 Move and recognize of RLDPA
-<video src="https://github.com/FabianSVega/university/assets/104441426/ab0eef29-fbea-4056-bdac-859672422a86"></video>
+
+
+https://github.com/FabianSVega/university/assets/104441426/a673f213-4a3a-414d-9b9b-57c6f2ce05e0
+
+
 📫 You can find the complet test on: https://youtu.be/XvtO-DwpOAI
 
